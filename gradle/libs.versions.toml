@@ -1,0 +1,5 @@
+[versions]
+shodo = "1.1.0-SNAPSHOT"
+
+[libraries]
+shodo = { group = "cc.irori", name = "shodo", version.ref = "shodo" }
