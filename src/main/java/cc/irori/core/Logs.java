@@ -1,4 +1,4 @@
-package cc.irori.manager;
+package cc.irori.core;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 

@@ -1,10 +1,10 @@
 {
   "Group": "IroriPowered",
-  "Name": "Manager",
+  "Name": "Core",
   "Version": "1.0.0",
   "Website": "https://www.irori.cc/",
-  "Description": "Management utilities",
-  "Main": "cc.irori.manager.ManagerPlugin",
+  "Description": "Core utilities",
+  "Main": "cc.irori.core.CorePlugin",
   "Authors": [
     {
       "Name": "KabanFriends",
@@ -12,8 +12,6 @@
     }
   ],
   "ServerVersion": "*",
-  "Dependencies": {
-    "IroriPowered:Shodo": "*"
-  },
+  "Dependencies": {},
   "OptionalDependencies": {}
 }
