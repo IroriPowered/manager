@@ -14,9 +14,11 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -60,10 +62,9 @@ public class CorePlugin extends JavaPlugin {
     protected void start() {
         LOGGER.atInfo().log("Welcome to Irori-Manager :)");
 
-        // Add currently online players and notify them the next restart
+        // Add currently online players
         for (PlayerRef player : Universe.get().getPlayers()) {
             onlinePlayers.add(player.getUuid());
-            sendNextRestart(player);
         }
 
         scheduleNextRestart();
@@ -104,8 +105,6 @@ public class CorePlugin extends JavaPlugin {
             if (playerRef != null && joiningPlayers.remove(playerRef.getUuid())) {
                 ShodoAPI.getInstance().sendMessage(playerRef, "プレイヤーチャットは、ここに日本語で表示されます。", Colors.GREEN);
                 ShodoAPI.getInstance().sendMessage(playerRef, "いろり鯖へようこそ！", Colors.GREEN);
-
-                sendNextRestart(playerRef);
 
                 playerRef.sendMessage(Message.join(
                         Message.raw("> Welcome to ").color(Colors.GOLD_LIGHT),
@@ -169,18 +168,6 @@ public class CorePlugin extends JavaPlugin {
         return today.plusDays(1).atTime(sortedHours.getFirst(), 0, 0);
     }
 
-    private static void sendNextRestart(PlayerRef player) {
-        LocalDateTime nextRestart = getNextRestart();
-        player.sendMessage(Message.join(
-                Message.raw("(!)").color(Colors.ORANGE).bold(true),
-                SPACE,
-                Message.raw("Next server RE-START at "),
-                Message.raw(formatTime(nextRestart)).color(Colors.YELLOW)
-        ));
-
-        ShodoAPI.getInstance().sendMessage(player, "次回のサーバー自動再起動: " + formatTimeJapanese(nextRestart), Colors.ORANGE);
-    }
-
     private static void announceRestart(PlayerRef player, int secondsLeft) {
         player.sendMessage(Message.join(
                 Message.raw("(!)").color(Colors.ORANGE).bold(true),
@@ -208,15 +195,27 @@ public class CorePlugin extends JavaPlugin {
         return totalSeconds + "秒";
     }
 
-    private static String formatTime(LocalDateTime time) {
-        return DAY_FORMATTER.format(time) + " " + TIME_FORMATTER.format(time);
+    public static boolean isShigenWorld(String worldName) {
+        return worldName.startsWith("shigen");
     }
 
-    private static String formatTimeJapanese(LocalDateTime time) {
-        int hour = time.getHour();
-        String period = (hour < 12) ? "午前" : "午後";
-        int hour12 = hour % 12;
-        if (hour12 == 0) hour12 = 12;
-        return String.format("%s %s%d時", DAY_FORMATTER.format(time), period, hour12);
+    public static boolean isShigenWorld(World world) {
+        return isShigenWorld(world.getName());
+    }
+
+    public static @Nullable World getNewestShigenWorld() {
+        World shigen = null;
+        int newestId = -1;
+
+        for (World world : Universe.get().getWorlds().values()) {
+            if (isShigenWorld(world)) {
+                int id = Integer.parseInt(world.getName().substring(6));
+                if (id > newestId) {
+                    newestId = id;
+                    shigen = world;
+                }
+            }
+        }
+        return shigen;
     }
 }
