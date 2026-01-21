@@ -8,6 +8,8 @@ public class Colors {
     private Colors() {
     }
 
+    public static final Color SCARLET_LIGHT = new Color(0xFF7F7F);
+
     public static final Color YELLOW = new Color(0xFFFF55);
     public static final Color GOLD_LIGHT = new Color(0xFFD47F);
     public static final Color MUSTARD = new Color(0xFFD42A);

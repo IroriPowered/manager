@@ -1,15 +1,22 @@
 package cc.irori.core;
 
 import cc.irori.shodo.ShodoAPI;
+import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.math.vector.Transform;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.ShutdownReason;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.data.PlayerConfigData;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -79,6 +86,9 @@ public class CorePlugin extends JavaPlugin {
 
         // Send join and leave messages
         getEventRegistry().register(PlayerConnectEvent.class, event -> {
+            Holder<EntityStore> holder = event.getHolder();
+            Player player = holder.getComponent(Player.getComponentType());
+
             if (onlinePlayers.add(event.getPlayerRef().getUuid())) {
                 broadcastMessage(event.getPlayerRef().getUsername() + " joined the game");
                 for (PlayerRef ref : Universe.get().getPlayers()) {
@@ -88,6 +98,26 @@ public class CorePlugin extends JavaPlugin {
                 }
 
                 joiningPlayers.add(event.getPlayerRef().getUuid());
+            }
+
+            assert player != null;
+
+            PlayerConfigData playerConfig = player.getPlayerConfigData();
+            String lastWorldName = playerConfig.getWorld();
+            World lastWorld = Universe.get().getWorld(lastWorldName);
+
+            // Trying to join a shigen world that no longer exists
+            if (lastWorld == null && isShigenWorld(lastWorldName)) {
+                World defaultWorld = Universe.get().getDefaultWorld();
+
+                Transform transform = defaultWorld.getWorldConfig().getSpawnProvider().getSpawnPoint(event.getPlayerRef().getReference(), event.getPlayerRef().getReference().getStore());
+                TransformComponent transformComponent = holder.ensureAndGetComponent(TransformComponent.getComponentType());
+                transformComponent.setPosition(transform.getPosition());
+                Vector3f rotationClone = transformComponent.getRotation().clone();
+                rotationClone.setYaw(transform.getRotation().getYaw());
+                transformComponent.setRotation(rotationClone);
+                HeadRotation headRotationComponent = holder.ensureAndGetComponent(HeadRotation.getComponentType());
+                headRotationComponent.teleportRotation(transform.getRotation());
             }
         });
         getEventRegistry().register(PlayerDisconnectEvent.class, event -> {
@@ -102,7 +132,9 @@ public class CorePlugin extends JavaPlugin {
             Store<EntityStore> store = ref.getStore();
             PlayerRef playerRef = store.getComponent(event.getPlayerRef(), PlayerRef.getComponentType());
 
-            if (playerRef != null && joiningPlayers.remove(playerRef.getUuid())) {
+            assert playerRef != null;
+
+            if (joiningPlayers.remove(playerRef.getUuid())) {
                 ShodoAPI.getInstance().sendMessage(playerRef, "プレイヤーチャットは、ここに日本語で表示されます。", Colors.GREEN);
                 ShodoAPI.getInstance().sendMessage(playerRef, "いろり鯖へようこそ！", Colors.GREEN);
 
@@ -117,6 +149,12 @@ public class CorePlugin extends JavaPlugin {
                         Message.raw(": ").color(Colors.GOLD_LIGHT),
                         Message.raw("discord.gg/" + DISCORD_INVITE).color(Colors.TEAL).link("https://discord.gg/" + DISCORD_INVITE)
                 ));
+            }
+
+            World world = playerRef.getReference().getStore().getExternalData().getWorld();
+            if (isShigenWorld(world)) {
+                ShodoAPI.getInstance().sendMessage(playerRef, "このワールドは定期的にリセットされるので、拠点の製作などは控えてください。", Colors.SCARLET_LIGHT);
+                ShodoAPI.getInstance().sendMessage(playerRef, "[!] 資源ワールドに入りました [!]", Colors.SCARLET_LIGHT);
             }
         });
     }
