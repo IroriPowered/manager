@@ -150,32 +150,35 @@ public class CorePlugin extends JavaPlugin {
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
             Ref<EntityStore> ref = event.getPlayerRef();
             Store<EntityStore> store = ref.getStore();
-            PlayerRef playerRef = store.getComponent(event.getPlayerRef(), PlayerRef.getComponentType());
 
-            assert playerRef != null;
+            World world = store.getExternalData().getWorld();
+            world.execute(() -> {
+                PlayerRef playerRef = store.getComponent(event.getPlayerRef(), PlayerRef.getComponentType());
 
-            if (joiningPlayers.remove(playerRef.getUuid())) {
-                ShodoAPI.getInstance().sendMessage(playerRef, "プレイヤーチャットは、ここに日本語で表示されます。", Colors.GREEN);
-                ShodoAPI.getInstance().sendMessage(playerRef, "いろり鯖へようこそ！", Colors.GREEN);
+                assert playerRef != null;
 
-                playerRef.sendMessage(Message.join(
-                        Message.raw("> Welcome to ").color(Colors.GOLD_LIGHT),
-                        Message.raw("IRORI Server").color(Colors.MUSTARD).bold(true),
-                        Message.raw("!").color(Colors.GOLD_LIGHT)
-                ));
-                playerRef.sendMessage(Message.join(
-                        Message.raw("> Please join our ").color(Colors.SKY_LIGHT),
-                        Message.raw("DISCORD").color(Colors.BLUE_LIGHT).bold(true),
-                        Message.raw(": ").color(Colors.GOLD_LIGHT),
-                        Message.raw("discord.gg/" + DISCORD_INVITE).color(Colors.TEAL).link("https://discord.gg/" + DISCORD_INVITE)
-                ));
-            }
+                if (joiningPlayers.remove(playerRef.getUuid())) {
+                    ShodoAPI.getInstance().sendMessage(playerRef, "プレイヤーチャットは、ここに日本語で表示されます。", Colors.GREEN);
+                    ShodoAPI.getInstance().sendMessage(playerRef, "いろり鯖へようこそ！", Colors.GREEN);
 
-            World world = playerRef.getReference().getStore().getExternalData().getWorld();
-            if (isShigenWorld(world)) {
-                ShodoAPI.getInstance().sendMessage(playerRef, "このワールドは定期的にリセットされるので、拠点の製作などは控えてください。", Colors.SCARLET_LIGHT);
-                ShodoAPI.getInstance().sendMessage(playerRef, "[!] 資源ワールドに入りました [!]", Colors.SCARLET_LIGHT);
-            }
+                    playerRef.sendMessage(Message.join(
+                            Message.raw("> Welcome to ").color(Colors.GOLD_LIGHT),
+                            Message.raw("IRORI Server").color(Colors.MUSTARD).bold(true),
+                            Message.raw("!").color(Colors.GOLD_LIGHT)
+                    ));
+                    playerRef.sendMessage(Message.join(
+                            Message.raw("> Please join our ").color(Colors.SKY_LIGHT),
+                            Message.raw("DISCORD").color(Colors.BLUE_LIGHT).bold(true),
+                            Message.raw(": ").color(Colors.GOLD_LIGHT),
+                            Message.raw("discord.gg/" + DISCORD_INVITE).color(Colors.TEAL).link("https://discord.gg/" + DISCORD_INVITE)
+                    ));
+                }
+
+                if (isShigenWorld(world)) {
+                    ShodoAPI.getInstance().sendMessage(playerRef, "このワールドは定期的にリセットされるので、拠点の製作などは控えてください。", Colors.SCARLET_LIGHT);
+                    ShodoAPI.getInstance().sendMessage(playerRef, "[!] 資源ワールドに入りました [!]", Colors.SCARLET_LIGHT);
+                }
+            });
         });
 
         getCommandRegistry().registerCommand(new SpawnCommand());
