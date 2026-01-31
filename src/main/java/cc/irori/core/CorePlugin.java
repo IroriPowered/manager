@@ -109,14 +109,12 @@ public class CorePlugin extends JavaPlugin {
             if (lastWorld == null && isShigenWorld(lastWorldName)) {
                 World defaultWorld = Universe.get().getDefaultWorld();
 
-                Transform transform = defaultWorld.getWorldConfig().getSpawnProvider().getSpawnPoint(event.getPlayerRef().getReference(), event.getPlayerRef().getReference().getStore());
+                Transform spawn = defaultWorld.getWorldConfig().getSpawnProvider().getSpawnPoint(event.getPlayerRef().getReference(), event.getPlayerRef().getReference().getStore());
                 TransformComponent transformComponent = holder.ensureAndGetComponent(TransformComponent.getComponentType());
-                transformComponent.setPosition(transform.getPosition());
-                Vector3f rotationClone = transformComponent.getRotation().clone();
-                rotationClone.setYaw(transform.getRotation().getYaw());
-                transformComponent.setRotation(rotationClone);
+                transformComponent.setPosition(spawn.getPosition());
+                transformComponent.setRotation(spawn.getRotation());
                 HeadRotation headRotationComponent = holder.ensureAndGetComponent(HeadRotation.getComponentType());
-                headRotationComponent.teleportRotation(transform.getRotation());
+                headRotationComponent.teleportRotation(spawn.getRotation());
             }
 
             shigenHuds.put(event.getPlayerRef().getUuid(), new ShigenHud(player, event.getPlayerRef()));
