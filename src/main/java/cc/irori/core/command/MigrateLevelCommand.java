@@ -19,8 +19,13 @@ import java.util.UUID;
 
 public class MigrateLevelCommand extends CommandBase {
 
+    // Old system
     private static final double LEVEL_BASE_XP = 50.0D;
     private static final double LEVEL_OFFSET = 0.0D;
+
+    // New system
+    private static final double LEVEL_MIGRATION_FACTOR = 1.0D;
+    private static final int STAT_POINTS_PER_LEVEL = 3;
 
     private static final HytaleLogger LOGGER = Logs.logger();
 
@@ -59,23 +64,32 @@ public class MigrateLevelCommand extends CommandBase {
                 double oldExperience = playerLevel.get("Experience").getAsDouble();
                 double xpProgress = oldExperience / xpNeededForNextLevel(oldLevel);
 
-                long currentLevelXp = api.getXpForLevel(oldLevel);
-                long nextLevelXp = api.getXpForLevel(oldLevel + 1);
+                int newLevel = (int) Math.floor(oldLevel * LEVEL_MIGRATION_FACTOR);
+
+                long currentLevelXp = api.getXpForLevel(newLevel);
+                long nextLevelXp = api.getXpForLevel(newLevel + 1);
                 long newXp = currentLevelXp + Math.round((nextLevelXp - currentLevelXp) * xpProgress);
-                int abilityPoints = calculateAbilityPoints(oldLevel);
+                int abilityPoints = calculateAbilityPoints(newLevel);
 
                 context.sendMessage(Message.join(
-                        Message.raw("  - Level: " + oldLevel + "\n"),
+                        Message.raw("  - Level: " + newLevel + "\n"),
                         Message.raw("  - Level Progress: " + (xpProgress * 100) + "%\n"),
                         Message.raw("  - New XP: " + newXp + "\n"),
                         Message.raw("  - Ability Points: " + abilityPoints)
                 ));
 
-                if (oldLevel > 0) {
-                    api.setLevel(uuid, oldLevel);
+                if (newLevel > 0) {
+                    api.setLevel(uuid, newLevel);
                     api.setXp(uuid, newXp);
                     api.setUsedAbilityPoints(uuid, 0);
                     api.setAbilityPoints(uuid, abilityPoints);
+
+                    api.setAgi(uuid, 0);
+                    api.setCon(uuid, 0);
+                    api.setInt(uuid, 0);
+                    api.setPer(uuid, 0);
+                    api.setStr(uuid, 0);
+                    api.setVit(uuid, 0);
                 }
             } catch (Exception e) {
                 context.sendMessage(Message.raw("Failed to migrate " + uuid + ": " + e.getMessage()));
@@ -105,6 +119,7 @@ public class MigrateLevelCommand extends CommandBase {
     }
 
     private static int calculateAbilityPoints(int level) {
+        /*
         int points = 0;
         for (int i = 1; i <= level; i++) {
             if (i % 5 == 0) {
@@ -114,5 +129,7 @@ public class MigrateLevelCommand extends CommandBase {
             }
         }
         return points;
+        */
+        return STAT_POINTS_PER_LEVEL * level;
     }
 }
