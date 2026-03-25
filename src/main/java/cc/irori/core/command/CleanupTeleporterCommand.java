@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class CleanupTeleporterCommand extends CommandBase {
 
@@ -30,10 +31,12 @@ public class CleanupTeleporterCommand extends CommandBase {
     @Override
     protected void executeSync(@NonNull CommandContext context) {
         LOGGER.atInfo().log("Clearing ExtendedTeleportHistory teleporters");
+        int removed1 = 0;
         File file = new File("universe/ExtendedTeleportHistory/Teleporters.json");
         try (JsonReader reader = new JsonReader(new FileReader(file))) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
             JsonArray array = root.getAsJsonArray("Teleporters");
+            ArrayList<JsonElement> toRemove = new ArrayList<>();
             for (JsonElement element : array) {
                 JsonObject teleporter = element.getAsJsonObject();
                 String dimension = teleporter.get("Dimension").getAsString();
@@ -41,9 +44,11 @@ public class CleanupTeleporterCommand extends CommandBase {
                 World world = Universe.get().getWorld(dimension);
                 if (world == null) {
                     LOGGER.atInfo().log("Clearing teleporter in world '%s'", dimension);
-                    array.remove(element);
+                    toRemove.add(element);
+                    removed1++;
                 }
             }
+            toRemove.forEach(array::remove);
 
             // Save the modified JSON back to the file
             try (FileWriter writer = new FileWriter(file)) {
@@ -59,9 +64,11 @@ public class CleanupTeleporterCommand extends CommandBase {
 
         LOGGER.atInfo().log("Clearing vanilla teleporters");
         File oldFile = new File("universe/warps.json");
+        int removed2 = 0;
         try (JsonReader reader = new JsonReader(new FileReader(oldFile))) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
             JsonArray array = root.getAsJsonArray("Warps");
+            ArrayList<JsonElement> toRemove = new ArrayList<>();
             for (JsonElement element : array) {
                 JsonObject warp = element.getAsJsonObject();
                 String worldName = warp.get("World").getAsString();
@@ -69,9 +76,11 @@ public class CleanupTeleporterCommand extends CommandBase {
                 World world = Universe.get().getWorld(worldName);
                 if (world == null) {
                     LOGGER.atInfo().log("Clearing teleporter in world '%s'", worldName);
-                    array.remove(element);
+                    toRemove.add(element);
+                    removed2++;
                 }
             }
+            toRemove.forEach(array::remove);
 
             // Save the modified JSON back to the file
             try (FileWriter writer = new FileWriter(oldFile)) {
@@ -84,5 +93,6 @@ public class CleanupTeleporterCommand extends CommandBase {
             LOGGER.atSevere().withCause(e).log("An error occurred while cleaning up teleporters");
             context.sendMessage(Message.raw("An error occurred while cleaning up teleporters: " + e.getMessage()));
         }
+        context.sendMessage(Message.raw(String.format("Removed %d ETH teleporters and %d vanilla teleporters", removed1, removed2)));
     }
 }
